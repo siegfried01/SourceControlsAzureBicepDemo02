@@ -27,7 +27,7 @@
    $id=(az.cmd group show --name $rg --query 'id' --output tsv)
    write-output "id=$id"
    $sp="spad_$name"
-   az.cmd ad sp create-for-rbac --appId $sp --sdk-auth --role contributor --scopes $id
+   az.cmd ad sp create-for-rbac --name $sp --sdk-auth --role contributor --scopes $id
    write-output "go to github settings->secrets and create a secret called AZURE_CREDENTIALS with the above output"
    End commands for one time initializations using Azure CLI with PowerShell
 
@@ -67,7 +67,7 @@ resource plan 'Microsoft.Web/serverfarms@2020-12-01' = {
     reserved: true
   }
 }
-resource website 'Microsoft.Web/sites@2021-03-01' = {
+resource website 'Microsoft.Web/sites@2021-03-01' {
   name: '${name}-website'
   location: location
   properties:{
