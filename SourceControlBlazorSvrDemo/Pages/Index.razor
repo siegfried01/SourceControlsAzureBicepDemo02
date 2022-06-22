@@ -1,0 +1,33 @@
+﻿@page "/"
+
+<PageTitle>Index</PageTitle>
+
+<h1>Demonstrate bicep sourceControls Feature</h1>
+
+Welcome to your new app. @DateTime.Now.ToString("dddd, MMMM dd yyyy hh:mm:ss.ffff tt (zzz)")
+
+
+<pre>
+    resource srcControls 'sourcecontrols@2021-03-01' = {
+        name: 'web'
+        properties: {
+            repoUrl: 'https://github.com/siegfried01/SourceControlsAzureBicepDemo02.git'
+            branch: 'main'
+            isManualIntegration: false
+            isGitHubAction: true
+            gitHubActionConfiguration: {
+                codeConfiguration: {
+                    runtimeStack: 'DOTNETCORE'
+                    runtimeVersion: '6'
+                }
+                generateWorkflowFile: true
+                isLinux: true
+            }
+        }
+    }
+</pre>
+
+<!--
+
+<SurveyPrompt Title="How is Blazor working for you?" />
+-->
