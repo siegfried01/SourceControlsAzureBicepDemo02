@@ -8,12 +8,20 @@ on:
     branches:
       - master
   workflow_dispatch:
-
+env:
+  AZURE_WEBAPP_NAME: tt6rsdw37cwys-website
+  AZURE_WEBAPP_PACKAGE_PATH: ./published
+  CONFIGURATION: Release
+  DOTNET_CORE_VERSION: 6.0.x
+  WORKING_DIRECTORY: ./SourceControlBlazorSvrDemo
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}    
       - uses: actions/checkout@v2
 
       - name: Set up .NET Core

@@ -10,14 +10,20 @@
 
    emacs 1
    Begin commands to deploy this file using Azure CLI with PowerShell
+   echo WaitForBuildComplete
+   WaitForBuildComplete
    write-output "begin deploy"
    az.cmd deployment group create --name $name --resource-group $rg   --template-file deploy-SourceControlBlazorSvrDemo.bicep
+   write-output "end deploy"
    End commands to deploy this file using Azure CLI with PowerShell
 
    emacs 2
    Begin commands to shut down this deployment using Azure CLI with PowerShell
+   echo CreateBuildEvent.exe
+   CreateBuildEvent.exe&
    write-output "begin shut down"
    az.cmd deployment group create --mode complete --template-file ./clear-resources.json --resource-group $rg
+   BuildIsComplete.exe
    Get-AzResource -ResourceGroupName $rg | ft
    End commands to shut down this deployment using Azure CLI with PowerShell
 
@@ -253,7 +259,8 @@ ERROR: {"status":"Failed","error":{"code":"DeploymentFailed","message":"At least
 }"}]}}
 
 */
-/*
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sites/sourcecontrols?tabs=bicep 
+// https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sourcecontrols?tabs=bicep
   resource srcControls 'sourcecontrols@2021-03-01' = {
     name: 'web'
     properties: {
@@ -271,5 +278,5 @@ ERROR: {"status":"Failed","error":{"code":"DeploymentFailed","message":"At least
       }
     }
   }
-*/
+
 }
