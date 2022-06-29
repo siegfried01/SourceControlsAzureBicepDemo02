@@ -35,6 +35,6 @@ jobs:
       with:
         app-name: websrcctrldemo
         slot-name: Production
-        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_AC6A3A1B6BA74419964E80E94097C0D6 }}
+        publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_B225D3A42D6C4277A1AFA3F1FAC0D830 }}
         package: \published\
 
