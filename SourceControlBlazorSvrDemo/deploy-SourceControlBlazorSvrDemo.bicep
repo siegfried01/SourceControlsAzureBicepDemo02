@@ -1,30 +1,33 @@
 
 /*
-(insert (search-replace-string (search-replace-string (file-name-nondirectory(buffer-file-name)) "^deploy-" "") "\\.bicep$" ""))
+
    Begin common prolog commands
-   write-output "common prolog"
+   write-output "begin common prolog"
    $name='SourceControlBlazorSvrDemo'
    $rg="rg_$name"
    $loc='westus2'
+   write-output "end common prolog"
    End common prolog commands
 
    emacs 1
    Begin commands to deploy this file using Azure CLI with PowerShell
    echo WaitForBuildComplete
    WaitForBuildComplete
-   write-output "begin deploy"
+   write-output "previous build is complete! begin deployment build"
+   #az.cmd deployment group create --name $name --resource-group $rg   --template-file  webapp_with_scm.json --parameters appplanName=appplanfee location=$loc appname=websrcctrldemo
    az.cmd deployment group create --name $name --resource-group $rg   --template-file deploy-SourceControlBlazorSvrDemo.bicep
-   write-output "end deploy"
+   write-output "end deployment build"
    End commands to deploy this file using Azure CLI with PowerShell
 
    emacs 2
    Begin commands to shut down this deployment using Azure CLI with PowerShell
    echo CreateBuildEvent.exe
    CreateBuildEvent.exe&
-   write-output "begin shut down"
+   write-output "begin shutdown"
    az.cmd deployment group create --mode complete --template-file ./clear-resources.json --resource-group $rg
    BuildIsComplete.exe
    Get-AzResource -ResourceGroupName $rg | ft
+   write-output "showdown is complete"
    End commands to shut down this deployment using Azure CLI with PowerShell
 
    emacs 3
@@ -36,6 +39,9 @@
    az.cmd ad sp create-for-rbac --appId $sp --sdk-auth --role contributor --scopes $id
    write-output "go to github settings->secrets and create a secret called AZURE_CREDENTIALS with the above output"
    End commands for one time initializations using Azure CLI with PowerShell
+
+   see https://docs.microsoft.com/en-us/azure/app-service/deploy-github-actions?tabs=applevel
+      configure with Portal (does not use sourceControls resource) https://docs.microsoft.com/en-us/azure/app-service/deploy-continuous-deployment?tabs=github
 
 */
 
@@ -80,8 +86,15 @@ resource website 'Microsoft.Web/sites@2020-12-01' = {
     serverFarmId: plan.id
     httpsOnly: true
     siteConfig:{
-      appSettings:[]
       linuxFxVersion: 'DOTNETCORE|6.0'
+      webSocketsEnabled: true
+      netFrameworkVersion: 'v6.0'
+      metadata:[
+         {
+            name: 'CURRENT_STACK'
+            value: 'dotnet'
+         }
+      ]
     }
   }
   resource logs 'config' = {
@@ -103,180 +116,25 @@ resource website 'Microsoft.Web/sites@2020-12-01' = {
     }
   }
 
-/*
-
-ERROR: {"status":"Failed","error":{"code":"DeploymentFailed","message":"At least one resource deployment operation failed. Please list deployment operations for details. Please see https://aka.ms/DeployOperations for usage details.","details":[{"code":"BadRequest","message":"{
-  "Code": "BadRequest",
-  "Message": "<Error xmlns=\\"http://schemas.microsoft.com/windowsazure\\" xmlns:i=\\"http://www.w3.org/2001/XMLSchema-instance\\"><Code>BadRequest</Code><Message>Repository 'UpdateSiteSourceControl' operation failed with Microsoft.Web.Hosting.SourceControls.OAuthException: GitHub GetSecretsPublicKey: API rate limit exceeded for user ID 11192805.
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;ProcessResponse&gt;d__31`1.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;GetSecretsPublicKey&gt;d__22.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;CreateOrUpdateGitHubActionSecret&gt;d__19.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;UpdateSiteSourceControl&gt;d__16.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.&lt;&gt;c__DisplayClass326_1.&lt;&lt;UpdateSiteSourceControl&gt;b__1&gt;d.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.AsyncHelper.RunSync[TResult](Func`1 func)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.UpdateSiteSourceControl(String subscriptionName, String webspaceName, String name, SiteSourceControl siteSourceControl).</Message><ExtendedCode>05007</ExtendedCode><MessageTemplate>Repository '{0}' operation failed with {1}.</MessageTemplate><Parameters xmlns:a=\\"http://schemas.microsoft.com/2003/10/Serialization/Arrays\\"><a:string>UpdateSiteSourceControl</a:string><a:string>Microsoft.Web.Hosting.SourceControls.OAuthException: GitHub GetSecretsPublicKey: API rate limit exceeded for user ID 11192805.
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;ProcessResponse&gt;d__31`1.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;GetSecretsPublicKey&gt;d__22.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;CreateOrUpdateGitHubActionSecret&gt;d__19.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;UpdateSiteSourceControl&gt;d__16.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.&lt;&gt;c__DisplayClass326_1.&lt;&lt;UpdateSiteSourceControl&gt;b__1&gt;d.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.AsyncHelper.RunSync[TResult](Func`1 func)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.UpdateSiteSourceControl(String subscriptionName, String webspaceName, String name, SiteSourceControl siteSourceControl)</a:string></Parameters><InnerErrors i:nil=\\"true\\"/><Details i:nil=\\"true\\"/><Target i:nil=\\"true\\"/></Error>",
-  "Target": null,
-  "Details": [
-    {
-      "Message": "<Error xmlns=\\"http://schemas.microsoft.com/windowsazure\\" xmlns:i=\\"http://www.w3.org/2001/XMLSchema-instance\\"><Code>BadRequest</Code><Message>Repository 'UpdateSiteSourceControl' operation failed with Microsoft.Web.Hosting.SourceControls.OAuthException: GitHub GetSecretsPublicKey: API rate limit exceeded for user ID 11192805.
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;ProcessResponse&gt;d__31`1.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;GetSecretsPublicKey&gt;d__22.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;CreateOrUpdateGitHubActionSecret&gt;d__19.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;UpdateSiteSourceControl&gt;d__16.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.&lt;&gt;c__DisplayClass326_1.&lt;&lt;UpdateSiteSourceControl&gt;b__1&gt;d.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.AsyncHelper.RunSync[TResult](Func`1 func)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.UpdateSiteSourceControl(String subscriptionName, String webspaceName, String name, SiteSourceControl siteSourceControl).</Message><ExtendedCode>05007</ExtendedCode><MessageTemplate>Repository '{0}' operation failed with {1}.</MessageTemplate><Parameters xmlns:a=\\"http://schemas.microsoft.com/2003/10/Serialization/Arrays\\"><a:string>UpdateSiteSourceControl</a:string><a:string>Microsoft.Web.Hosting.SourceControls.OAuthException: GitHub GetSecretsPublicKey: API rate limit exceeded for user ID 11192805.
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;ProcessResponse&gt;d__31`1.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;GetSecretsPublicKey&gt;d__22.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;CreateOrUpdateGitHubActionSecret&gt;d__19.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;UpdateSiteSourceControl&gt;d__16.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.&lt;&gt;c__DisplayClass326_1.&lt;&lt;UpdateSiteSourceControl&gt;b__1&gt;d.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.AsyncHelper.RunSync[TResult](Func`1 func)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.UpdateSiteSourceControl(String subscriptionName, String webspaceName, String name, SiteSourceControl siteSourceControl)</a:string></Parameters><InnerErrors i:nil=\\"true\\"/><Details i:nil=\\"true\\"/><Target i:nil=\\"true\\"/></Error>"
-    },
-    {
-      "Code": "BadRequest"
-    },
-    {
-      "ErrorEntity": {
-        "Code": "BadRequest",
-        "Message": "<Error xmlns=\\"http://schemas.microsoft.com/windowsazure\\" xmlns:i=\\"http://www.w3.org/2001/XMLSchema-instance\\"><Code>BadRequest</Code><Message>Repository 'UpdateSiteSourceControl' operation failed with Microsoft.Web.Hosting.SourceControls.OAuthException: GitHub GetSecretsPublicKey: API rate limit exceeded for user ID 11192805.
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;ProcessResponse&gt;d__31`1.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;GetSecretsPublicKey&gt;d__22.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;CreateOrUpdateGitHubActionSecret&gt;d__19.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;UpdateSiteSourceControl&gt;d__16.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.&lt;&gt;c__DisplayClass326_1.&lt;&lt;UpdateSiteSourceControl&gt;b__1&gt;d.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.AsyncHelper.RunSync[TResult](Func`1 func)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.UpdateSiteSourceControl(String subscriptionName, String webspaceName, String name, SiteSourceControl siteSourceControl).</Message><ExtendedCode>05007</ExtendedCode><MessageTemplate>Repository '{0}' operation failed with {1}.</MessageTemplate><Parameters xmlns:a=\\"http://schemas.microsoft.com/2003/10/Serialization/Arrays\\"><a:string>UpdateSiteSourceControl</a:string><a:string>Microsoft.Web.Hosting.SourceControls.OAuthException: GitHub GetSecretsPublicKey: API rate limit exceeded for user ID 11192805.
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;ProcessResponse&gt;d__31`1.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.SourceControls.GitHubProxy.&lt;GetSecretsPublicKey&gt;d__22.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;CreateOrUpdateGitHubActionSecret&gt;d__19.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.GitHubActionRepositoryProvider.&lt;UpdateSiteSourceControl&gt;d__16.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.&lt;&gt;c__DisplayClass326_1.&lt;&lt;UpdateSiteSourceControl&gt;b__1&gt;d.MoveNext()
---- End of stack trace from previous location where exception was thrown ---
-   at System.Runtime.ExceptionServices.ExceptionDispatchInfo.Throw()
-   at System.Runtime.CompilerServices.TaskAwaiter.HandleNonSuccessAndDebuggerNotification(Task task)
-   at Microsoft.Web.Hosting.AsyncHelper.RunSync[TResult](Func`1 func)
-   at Microsoft.Web.Hosting.Administration.WebCloudController.UpdateSiteSourceControl(String subscriptionName, String webspaceName, String name, SiteSourceControl siteSourceControl)</a:string></Parameters><InnerErrors i:nil=\\"true\\"/><Details i:nil=\\"true\\"/><Target i:nil=\\"true\\"/></Error>"
-      }
-    }
-  ],
-  "Innererror": null
-}"}]}}
-
-*/
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sites/sourcecontrols?tabs=bicep 
 // https://docs.microsoft.com/en-us/azure/templates/microsoft.web/sourcecontrols?tabs=bicep
+/*
   resource srcControls 'sourcecontrols@2021-03-01' = {
     name: 'web'
     properties: {
       repoUrl: 'https://github.com/siegfried01/SourceControlsAzureBicepDemo02.git'
-      branch: 'main'
+      branch: 'master'
       isManualIntegration: false
       isGitHubAction: true
       gitHubActionConfiguration: {
         codeConfiguration: {
-          runtimeStack: 'DOTNETCORE'
-          runtimeVersion: '6'
+          runtimeStack: 'DOTNET'
+          runtimeVersion: '6.0'
         }
         generateWorkflowFile: true
-        isLinux: true
-      }
+        isLinux: true        
+      }      
     }
   }
-
+*/
 }
